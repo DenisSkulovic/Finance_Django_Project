@@ -1,13 +1,40 @@
-version: '3.7'
+# version of docker-compose, not Python
+version: '3.7' 
 services:
+  # web is a name for a service that will be run by the container
   web:
+    restart: always
     build: .
-    command: python /code/manage.py runserver 0.0.0.0:8000
+    command: python /Finance_Django_Project/manage.py runserver 0.0.0.0:8000
+    # volumes mount syncs the docker filesystem with the local computer's filesystem
     volumes:
       - .:/code
+    # specify what port to expose
     ports:
       - 8000:8000
     depends_on:
       - db
+    links:
+      - db:db
+    networks:
+      - djangonetwork
+  # db is a name for a service that will be run by the container
   db:
       image: postgres:11
+      volumes:
+        - postgres_data:/var/lib/postgresql/data/
+      expose:
+        - "5432"
+      networks:
+      - djangonetwork
+      environment:
+        POSTGRES_PASSWORD: postgres
+        POSTGRES_DB: finance_django
+        # - "POSTGRES_HOST_AUTH_METHOD=trust"
+
+networks: 
+  djangonetwork:
+    driver: bridge
+
+volumes:
+  postgres_data:

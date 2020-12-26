@@ -41,6 +41,8 @@ INSTALLED_APPS = [
     # 'crispy_forms',
     'account.apps.AccountConfig',
     'mainpage.apps.MainpageConfig',
+    'analysis.apps.AnalysisConfig',
+    'portfolio.apps.PortfolioConfig',
 ]
 
 MIDDLEWARE = [
@@ -126,3 +128,6 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
 STATIC_URL = '/static/'
+
+
+AUTH_USER_MODEL = 'account.CustomUser'
