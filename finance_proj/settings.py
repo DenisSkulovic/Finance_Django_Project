@@ -38,8 +38,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    # 'crispy_forms',
-    'account.apps.AccountConfig',
+    'django.contrib.sites',
+    'crispy_forms',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'users.apps.UsersConfig',
     'mainpage.apps.MainpageConfig',
     'analysis.apps.AnalysisConfig',
     'portfolio.apps.PortfolioConfig',
@@ -137,8 +141,26 @@ STATICFILES_FINDERS = [ # tells Django HOW to look for static file directories (
     "django.contrib.staticfiles.finders.AppDirectoriesFinder",
 ]
 
+CRISPY_TEMPLATE_PACK = 'bootstrap4'
 
-AUTH_USER_MODEL = 'account.CustomUser'
+# AUTH_USER_MODEL = 'users.CustomUser'
 
 LOGIN_REDIRECT_URL = 'mainpage'
-LOGOUT_REDIRECT_URL = 'mainpage'
+ACCOUNT_LOGOUT_REDIRECT = 'mainpage'
+
+
+
+# django-allauth config
+SITE_ID = 1 # django allows to control several sites, but this project is just one site
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+ACCOUNT_SESSION_REMEMBER = True
+ACCOUNT_SIGNUP_PASSWORD_ENTER_TWICE = False
+# signup only with email (not username)
+ACCOUNT_USERNAME_REQUIRED = False
+ACCOUNT_AUTHENTICATION_METHOD = 'email'
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_UNIQUE_EMAIL = True
