@@ -12,6 +12,9 @@ services:
     # specify what port to expose
     ports:
       - 8000:8000
+    environment: #if the key has a $, it needs to become $$ to avoid an error
+      - SECRET_KEY=e7688pwkg74i88%c6i*m0ipuf)(==l07ozf^p^jc195i6-7!cp
+      - DEBUG=1
     depends_on:
       - db
     links:
