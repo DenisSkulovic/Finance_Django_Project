@@ -1,0 +1,7 @@
+{% load i18n %}  {% comment %} allows automatic translation to non-english {% endcomment %}
+{% autoescape off %} {% comment %} autoescape protects against security issues like cross site scripting. We trust the text we wrote, so we turn it off {% endcomment %}
+{% blocktrans %}Please Confirm Your E-mail Address{% endblocktrans %} {% comment %} these tags are here to support translations {% endcomment %}
+{% endautoescape %}
+{% comment %} Currently the text is default, but can be easily changed now if I really wanted to {% endcomment %}
+
+{% comment %} all the tags above came from django source files on github, so go there if need be to find other customization opportunities {% endcomment %}
