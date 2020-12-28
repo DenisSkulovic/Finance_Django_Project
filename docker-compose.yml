@@ -1,16 +1,20 @@
-# version of docker-compose, not Python
-version: '3.7' 
+# docker compose is a tool for defining and running multi-container Docker applications
+# docker compose allows to treat a group of containers as single entity, i.e. "run an app" (run an orchestrated cluster of containers) instead of "run a container"
+# pip install docker-compose
+
+# to destroy the cluster and data volumes, add -v
+# docker-compose down -v
+
+version: '3.7'  # version of docker-compose, not Python
 services:
   # web is a name for a service that will be run by the container
   web:
     restart: always
     build: .
     command: python /Finance_Django_Project/manage.py runserver 0.0.0.0:8000
-    # volumes mount syncs the docker filesystem with the local computer's filesystem
-    volumes:
+    volumes: # volumes mount syncs the docker filesystem with the local computer's filesystem (i.e. stores data instead of dropping at restart)
       - .:/code
-    # specify what port to expose
-    ports:
+    ports: # specify what port to expose
       - 8000:8000
     environment: #if the key has a $, it needs to become $$ to avoid an error
       - SECRET_KEY=e7688pwkg74i88%c6i*m0ipuf)(==l07ozf^p^jc195i6-7!cp
@@ -21,19 +25,20 @@ services:
       - db:db
     networks:
       - djangonetwork
+      
   # db is a name for a service that will be run by the container
   db:
-      image: postgres:11
-      volumes:
-        - postgres_data:/var/lib/postgresql/data/
-      expose:
-        - "5432"
-      networks:
-      - djangonetwork
-      environment:
-        POSTGRES_PASSWORD: postgres
-        POSTGRES_DB: finance_django
-        # - "POSTGRES_HOST_AUTH_METHOD=trust" 
+    image: postgres:11
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    expose:
+      - "5432" #port that is specified in Django settings
+    networks:
+    - djangonetwork
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: finance_django
+      # - "POSTGRES_HOST_AUTH_METHOD=trust" 
 
 networks: 
   djangonetwork:

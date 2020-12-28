@@ -39,10 +39,12 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.sites',
+    # 3rd party
     'crispy_forms',
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
+    # custom
     'users.apps.UsersConfig',
     'mainpage.apps.MainpageConfig',
     'analysis.apps.AnalysisConfig',
@@ -89,7 +91,7 @@ DATABASES = {
         'NAME': 'postgres',
         'USER': 'postgres',
         'PASSWORD': 'postgres',
-        'HOST': 'db',
+        'HOST': 'db', #name as specified in the docker-compose.yml
         'PORT': 5432,
     }
 }
@@ -146,7 +148,7 @@ CRISPY_TEMPLATE_PACK = 'bootstrap4'
 # AUTH_USER_MODEL = 'users.CustomUser'
 
 LOGIN_REDIRECT_URL = 'mainpage'
-ACCOUNT_LOGOUT_REDIRECT = 'mainpage'
+ACCOUNT_LOGOUT_REDIRECT = 'mainpage' #not LOGOUT_REDIRECT_URL because I am using allauth
 
 
 
@@ -157,9 +159,9 @@ AUTHENTICATION_BACKENDS = [
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-ACCOUNT_SESSION_REMEMBER = True
-ACCOUNT_SIGNUP_PASSWORD_ENTER_TWICE = False
-# signup only with email (not username)
+ACCOUNT_SESSION_REMEMBER = True #removes the "remember me" button when logging in, making it checked by default
+ACCOUNT_SIGNUP_PASSWORD_ENTER_TWICE = False #enter password only once when registering, because in case it;s forgotten it can be restored via email
+# signup only with email (not username) - make username not required and email required and unique. Username is created by chopping off @email.com, and if not unique, adding two digits on the end of it
 ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_AUTHENTICATION_METHOD = 'email'
 ACCOUNT_EMAIL_REQUIRED = True
