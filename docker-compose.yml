@@ -13,36 +13,55 @@ services:
     build: .
     command: python /Finance_Django_Project/manage.py runserver 0.0.0.0:8000
     volumes: # volumes mount syncs the docker filesystem with the local computer's filesystem (i.e. stores data instead of dropping at restart)
-      - .:/code
+      - .:/Finance_Django_Project
     ports: # specify what port to expose
       - 8000:8000
     environment: #if the key has a $, it needs to become $$ to avoid an error
       - SECRET_KEY=e7688pwkg74i88%c6i*m0ipuf)(==l07ozf^p^jc195i6-7!cp
       - DEBUG=1
     depends_on:
-      - db
+      - postgres
     links:
-      - db:db
+      - postgres:postgres
     networks:
       - djangonetwork
-      
-  # db is a name for a service that will be run by the container
-  db:
+
+  postgres:
     image: postgres:11
+    restart: always
+    environment:
+      POSTGRES_DB: finance_django
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      PGDATA: /var/lib/postgresql/data
     volumes:
-      - postgres_data:/var/lib/postgresql/data/
-    expose:
-      - "5432" #port that is specified in Django settings
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432" #port that is specified in Django settings
     networks:
     - djangonetwork
+
+  pgadmin:
+    image: dpage/pgadmin4:4.18
     environment:
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: finance_django
-      # - "POSTGRES_HOST_AUTH_METHOD=trust" 
+      PGADMIN_DEFAULT_EMAIL: fantas300@gmail.com
+      PGADMIN_DEFAULT_PASSWORD: postgres
+      PGADMIN_LISTEN_PORT: 80
+    ports:
+      - "8080:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    links:
+      - "postgres:pgsql-server"
+    networks:
+      - djangonetwork
+
 
 networks: 
   djangonetwork:
     driver: bridge
 
 volumes:
+  finance_django_project_data:
   postgres_data:
+  pgadmin_data:

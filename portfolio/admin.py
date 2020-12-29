@@ -1,3 +1,6 @@
 from django.contrib import admin
+from portfolio.models import Ticker, Portfolio
 
-# Register your models here.
+
+admin.site.register(Ticker)
+admin.site.register(Portfolio)
