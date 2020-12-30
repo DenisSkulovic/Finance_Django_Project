@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <img src="{{data.logo_url}}" width=100 height=100>
+    <p id="symbol" data_symbol="{{ data.symbol }}">{{ data.symbol }}</p>
+    {% include 'snippets/ticker_detail_key_statistics.html' with data=data %}
+{% endblock content %}
+
+
+{% block javascript %}
+    <script>
+    function refresh_ticker_data(){
+        console.log('refresh_ticker_data activated')
+        $.ajax({
+            url:"{% url 'get_updated_ticker_data' %}",
+            type: 'POST',
+            data: { symbol: "{{data.symbol}}"},
+            dataType: 'json',
+            success: (data) => {
+                $("#previousClose").html(data.previousClose);
+                $("#open").html(data.open);
+                $("#bid").html(data.bid);
+                $("#ask").html(data.ask);
+                $("#profitMargins").html(data.profitMargins);
+                $("#volume").html(data.volume);
+                $("#averageVolume").html(data.averageVolume);
+                $("#marketCap").html(data.marketCap);
+                $("#beta3Year").html(data.beta3Year);
+                $("#forwardPE").html(data.forwardPE);
+                $("#trailingEps").html(data.trailingEps);
+                $("#ytdReturn").html(data.ytdReturn);
+                $("#trailingAnnualDividendYield").html(data.trailingAnnualDividendYield);
+                $("#exDividendDate").html(data.exDividendDate);
+            }
+        })
+    }
+
+    $('#symbol').on("click", refresh_ticker_data);
+
+    $(document).ready(
+        $(window).on("load", (e)=>{
+            e.preventDefault();
+            refresh_ticker_data();
+            setInterval(refresh_ticker_data, 10000);
+        })
+    )
+    
+        
+    </script>
+{% endblock javascript %}
