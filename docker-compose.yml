@@ -18,10 +18,12 @@ services:
     env_file: .env
     depends_on:
       - postgres
-      - redis
+      # - redis
+      - hub
     links:
       - postgres:postgres
-      - redis:redis
+      # - redis:redis
+      - hub:hub
     networks:
       - djangonetwork
 
@@ -48,37 +50,63 @@ services:
     networks:
       - djangonetwork
 
-  redis:
-    restart: always
-    env_file: .env
-    image: redis:6.0.9-alpine
-    expose:
-      - "6379"
-  celery:
-    restart: always
-    env_file: .env
-    build: .
-    command: celery -A core worker -l info
-    volumes:
-      - .:/Finance_Django_Project
-    depends_on:
-      - web
-      - redis
-  celery-beat:
-    restart: always
-    env_file: .env
-    build: .
-    command: celery -A core beat -l info
-    volumes:
-      - .:/Finance_Django_Project
-    depends_on:
-      - web
-      - redis
+  # redis:
+  #   restart: always
+  #   env_file: .env
+  #   image: redis:6.0.9-alpine
+  #   expose:
+  #     - "6379"
+  # celery:
+  #   restart: always
+  #   env_file: .env
+  #   build: .
+  #   command: celery -A core worker -l info
+  #   volumes:
+  #     - .:/Finance_Django_Project
+  #   depends_on:
+  #     - web
+  #     - redis
+  # celery-beat:
+  #   restart: always
+  #   env_file: .env
+  #   build: .
+  #   command: celery -A core beat -l info
+  #   volumes:
+  #     - .:/Finance_Django_Project
+  #   depends_on:
+  #     - web
+  #     - redis
 
+  hub:
+    image: selenium/hub:3.141.59
+    ports:
+      - 4444:4444
+    volumes:
+      - .:/Finance_Django_Project
+    networks:
+      - djangonetwork
+    privileged: true
+
+  chrome:
+    image: selenium/node-chrome:3.141.59
+    depends_on:
+      - hub
+    environment:
+      - HUB_HOST=hub
+    volumes:
+      - .:/Finance_Django_Project
+    networks:
+      - djangonetwork
+    privileged: true
+    # hostname: chrome
+    # ports:
+    #   - "4444:4444"
+    #   - "5900:5900"
 
 networks: 
   djangonetwork:
     driver: bridge
+    # external: true
 
 volumes:
   finance_django_project_data:

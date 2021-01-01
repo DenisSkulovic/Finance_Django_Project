@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'mainpage.apps.MainpageConfig',
     'analysis.apps.AnalysisConfig',
     'portfolio.apps.PortfolioConfig',
+    'scraper.apps.ScraperConfig',
 ]
 
 MIDDLEWARE = [
