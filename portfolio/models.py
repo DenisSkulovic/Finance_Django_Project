@@ -4,8 +4,8 @@ User = get_user_model()
 
 
 class Ticker(models.Model):
-    created_date = models.DateTimeField(auto_now_add=True)
-    modified_date = models.DateTimeField(auto_now=True)
+    created_date = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    modified_date = models.DateTimeField(auto_now=True, null=True, blank=True)
     symbol = models.CharField(max_length=20)
     zip = models.CharField(max_length=50, null=True, blank=True)
     sector = models.CharField(max_length=255, null=True, blank=True)

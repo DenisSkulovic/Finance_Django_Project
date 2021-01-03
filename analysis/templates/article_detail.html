@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+
+
+{% block content %}
+
+    
+    <h1>{{article.title}}</h1>
+    <p>{{article.date}}</p>
+    <p>{{article.link}}</p>
+    <p>{{article.status}}</p>
+
+    <div id='articles_text_container'>
+        {% if texts %}
+            {% for text in texts %}
+                <{{text.tag}}>{{text.text}}</{{text.tag}}>
+            {% endfor %}
+        {% else %}
+            No texts
+        {% endif %}
+    </div>
+{% endblock content %}
+
+
+{% block javascript %}
+    <script>
+    {% comment %} function refresh_request_status(){
+        console.log('refresh_request_status activated')
+        $.ajax({
+            url:"{% url 'get_request_status_data' %}",
+            type: 'POST',
+            data: { pk: "{{req.pk}}"},
+            dataType: 'json',
+            success: (data) => {
+                console.log(data)
+                console.log('success')
+                $("#request_articles_container").html(data.articles_html);
+            }
+        })
+    }
+
+
+    $(document).ready(
+        $(window).on("load", (e)=>{
+            e.preventDefault();
+            refresh_request_status();
+            setInterval(refresh_request_status, 5000);
+        })
+    ) {% endcomment %}
+    </script>
+{% endblock javascript %}

@@ -12,6 +12,9 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 
 from pathlib import Path
 import os
+import analysis.data_cleaning as dcl
+from keras.models import load_model
+import pickle
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -21,12 +24,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('SECRET_KEY') #get the secret key from docker-compose.yml
+# SECRET_KEY = os.environ.get('SECRET_KEY')
+SECRET_KEY = "e7688pwkg74i88%c6i*m0ipuf)(==l07ozf^p^jc195i6-7!cp"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = int(os.environ.get('DEBUG', default=0))
+# DEBUG = int(os.environ.get('DEBUG', default=0))
+DEBUG = 1
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -94,11 +99,16 @@ WSGI_APPLICATION = 'finance_proj.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('POSTGRES_DB'),
-        'USER': os.environ.get('POSTGRES_USER'),
-        'PASSWORD': os.environ.get('POSTGRES_PASSWORD'),
-        'HOST': os.environ.get('POSTGRES_HOST'), #name as specified in the docker-compose.yml
-        'PORT': os.environ.get('POSTGRES_PORT'),
+        'NAME': 'finance_django',
+        'USER': 'postgres',
+        'PASSWORD': 'postgres',
+        'HOST': '127.0.0.1',
+        'PORT': '5432',
+        # 'NAME': os.environ.get('POSTGRES_DB'),
+        # 'USER': os.environ.get('POSTGRES_USER'),
+        # 'PASSWORD': os.environ.get('POSTGRES_PASSWORD'),
+        # 'HOST': os.environ.get('POSTGRES_HOST'),
+        # 'PORT': os.environ.get('POSTGRES_PORT'),
     }
 }
 
@@ -175,18 +185,34 @@ ACCOUNT_UNIQUE_EMAIL = True
 
 DEFAULT_FROM_EMAIL = 'admin@iziMoney.com'
 
-
-CELERY_BROKER_URL = os.environ.get("CELERY_BROKER", "redis://redis:6379/0")
-CELERY_RESULT_BACKEND = os.environ.get("CELERY_BROKER", "redis://redis:6379/0")
-
-# CELERY_BEAT_SCHEDULE = {
-#     "sample_task": {
-#         "task": "core.tasks.sample_task",
-#         "schedule": crontab(minute="*/1"),
-#     },
-# }
+CHROMEDRIVER_PATH = "/app/.chromedriver/bin/chromedriver"
+GOOGLE_CHROME_BIN = "/app/.apt/usr/bin/google-chrome"
 
 # Heroku
 import dj_database_url
 db_from_env = dj_database_url.config(conn_max_age=500)
 DATABASES['default'].update(db_from_env)
+
+
+
+
+# load text_cleaner and model
+with open('analysis/tokenizer.pickle', 'rb') as f:
+    TOKENIZER = pickle.load(f)
+TEXT_CLEANER = dcl.ArticleTextCleaner(tokenizer = TOKENIZER)
+MODEL = load_model('analysis/best_NN_model.hdf5')
+
+
+# ENVIRONMENT = os.environ.get('ENVIRONMENT', default='development')
+ENVIRONMENT = 'development'
+if ENVIRONMENT == "production":
+    SECURE_BROWSER_XSS_FILTER = True
+    X_FRAME_OPTIONS = 'DENY'
+    SECURE_SSL_REDIRECT = True
+    SECURE_HSTS_SECONDS = 3600
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')

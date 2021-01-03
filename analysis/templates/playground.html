@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <textarea id="NN_textarea" placeholder="Enter your text here..."></textarea>
+    <div id="NN_result_div">
+        Results will appear here.
+    </div>
+{% endblock content %}
+
+
+{% block javascript %}
+    <script>
+    $('#NN_textarea').on("keyup", (e) => {
+        e.preventDefault()
+        console.log('send_data_for_NN_analysis activated')
+        console.log($("#NN_textarea").val())
+        $.ajax({
+            url:"{% url 'evaluate' %}",
+            type: 'POST',
+            data: { text: $("#NN_textarea").val() },
+            dataType: 'json',
+            success: (outputs) => {
+                console.log(outputs.html);
+                $("#NN_result_div").html(outputs.html);
+            }
+        })
+    });
+        
+    </script>
+{% endblock javascript %}

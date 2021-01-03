@@ -1,4 +1,5 @@
 import pandas as pd
+from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver import Chrome, Remote
 from selenium.webdriver import ChromeOptions
 from selenium.webdriver.common.by import By
@@ -11,12 +12,13 @@ from dateutil.relativedelta import relativedelta
 import time
 from typing import List
 from abc import ABC, abstractproperty, abstractmethod
-
+from pandas import to_datetime
+from django.contrib.auth import get_user_model
 from scraper import scraper_exceptions as SE
+from scraper.models import Text, Article, Request
+User = get_user_model()
 
-from scraper.models import Text, Link, Date, Title, Pending
 
-import socket
 
 
 
@@ -24,25 +26,24 @@ class BaseScraper:
     
     def __init__(self):
         self.browser = None
-            
-            
+                        
     @SE.ExceptionHandler(SE.BrowserStartException, True)
     def _open_new_browser(self):
         options = ChromeOptions()
         prefs = {"profile.default_content_setting_values.notifications" : 2}
         options.add_experimental_option("prefs",prefs)
-        options.add_argument("--headless")
         options.add_argument('--no-sandbox')
         options.add_argument('--disable-gpu')
         options.add_argument('--use-gl=desktop')
         options.add_argument('--log-level=3')
         options.add_argument("--disable-extensions")
         options.add_argument("--incognito")
+        # options.add_argument("--headless")
+        # options.add_argument("--disable-dev-shm-usage")
         # options.binary_location = os.environ.get("GOOGLE_CHROME_BIN")
 
-        host = socket.gethostbyname(socket.gethostname())
-        print('host: ', host)
-        browser = Remote(command_executor=f'http://{host}:4444/wd/hub', desired_capabilities=DesiredCapabilities.CHROME)
+        # browser = Chrome(executable_path=os.environ.get("CHROMEDRIVER_PATH"), options=options)
+        browser = Chrome(executable_path=ChromeDriverManager().install(), options=options)
         return browser
     
         
@@ -121,15 +122,10 @@ class BaseScraper:
 
 class GoogleScraper(BaseScraper):
     
-    def __init__(self, keyword, search_start_date, periods, save_to_location, browser_wait_time = 5, word_count_threshold= 500, periodicity='M', google_results_pages=5, **kwargs):
+    def __init__(self, periods='', browser_wait_time = 5, word_count_threshold= 500, **kwargs):
         super().__init__(**kwargs)
-        self.keyword = keyword
-        self.save_to_location = save_to_location
         self.browser_wait_time = browser_wait_time
         self.word_count_threshold = word_count_threshold
-        self.google_results_pages = google_results_pages
-        self.search_periods = self.generate_date_ranges(search_start_date, periods, periodicity)
-        self.articles_scraped_counter = 0
 
     @SE.ExceptionHandler(SE.BrowserStartException, raise_error=True)
     def _change_google_to_english(self):
@@ -204,16 +200,12 @@ class GoogleScraper(BaseScraper):
         # click "Time" button
         time.sleep(0.5)
         xpath = '//div[@class="mn-hd-txt"]'
-        print('clicking on time')
         self._get_element_by_xpath(xpath, self.browser_wait_time).click() 
-        print('clicked')
         
         # click "Custom Range" button
         time.sleep(0.5)
         xpath = '//span[@role="menuitem" and @jsaction="EEGHee" and @tabindex="-1"]'
-        print('clicking on custom range')
         self._get_element_by_xpath(xpath, self.browser_wait_time).click()            
-        print('clicked')
         
         # enter "from" date into search tools
         time.sleep(0.5)
@@ -221,7 +213,6 @@ class GoogleScraper(BaseScraper):
         from_field = self._get_element_by_xpath(from_path, self.browser_wait_time)
         try: from_field.clear().send_keys(from_date)
         except: from_field.send_keys(from_date)
-        print('entered keys')
         
         # enter "to" date into search tools
         time.sleep(0.5)
@@ -229,13 +220,11 @@ class GoogleScraper(BaseScraper):
         to_field = self._get_element_by_xpath(to_path, self.browser_wait_time)
         try: to_field.clear().send_keys(to_date)
         except: to_field.send_keys(to_date)
-        print('entered keys')
         
         # click "Go" button
         time.sleep(0.5)
         go_path = '//g-button[@class="Ru1Ao BwGU8e fE5Rge"]'
         self._get_element_by_xpath(go_path, self.browser_wait_time).click()
-        print('clicked go')
 
 
     @staticmethod
@@ -276,12 +265,6 @@ class GoogleScraper(BaseScraper):
 
     @SE.ExceptionHandler(SE.ClickException, raise_error=True)
     def _next_google_results_page(self, page_no):
-        """Open a specific google search page in search results window.
-
-        Args:
-            page_no (int): Number of search results page to open.
-        """
-        self.browser.switch_to.window(window_name=self.browser.window_handles[0])
         self._get_element_by_xpath(f'//a[@aria-label="Page {page_no}"]').click()
 
     @staticmethod
@@ -297,67 +280,102 @@ class GoogleScraper(BaseScraper):
                 return texts_to_keep
         return text_data
 
-    def scrape(self):
-        """Scrape Google Search for text on entered keyword and for set date period. Saves files to specified location.
-        """
-        self.browser = self._open_new_browser()
-        # try:
-        self._browse_to_page('https://www.google.com/')
-        print('opened google')
+
+
+    def scrape_dates_links(self, work_time_sec=120):
         try:
-            self._change_google_to_english()
-            print('changed lang to english')
-        except:
-            print('did not change lang to english')
-            pass
-        self._get_element_by_xpath('//input[@type="text"]').send_keys(self.keyword) #enter keyword
-        time.sleep(0.5)
-        self._get_element_by_xpath("//input[@type='submit']").click() #submit keyword for search
-        
+            self.browser = self._open_new_browser()
+            start = time.time()
+            while True:
+                request = Request.objects.filter(status='Unprocessed').first()
+                if request == None:
+                    break
+                
+                self._browse_to_page('https://www.google.com/')
+                try:
+                    self._change_google_to_english()
+                except:
+                    pass
+                self._get_element_by_xpath('//input[@type="text"]').send_keys(request.keyword) #enter keyword
+                time.sleep(0.5)
+                self._get_element_by_xpath("//input[@type='submit']").click() #submit keyword for search
 
-        
-        # loop through date periods
-        current_period = 1
-        for from_d, to_d in self.search_periods:
-            from_d = from_d.strftime('%m/%d/%Y')
-            to_d = to_d.strftime('%m/%d/%Y')
-            # ensure the current results page is not larger than variable "google_results_pages"
-            current_page = 1
-            while current_page <= self.google_results_pages:
-                print(f'\n\ncurrent_period: {current_period}; total_periods: {len(self.search_periods)}')
-                print(f'current_page: {current_page}; google_results_pages: {self.google_results_pages}')
-                if current_page == 1:
-                    if current_period == 1:
-                        xpath = '//div[@id="hdtb-tls"]'
-                        self._get_element_by_xpath(xpath).click() # clicking Tools button, stays active during subsequent results pages so no need to repeat step
-                        print('clicked Tools')
-                    self._set_custom_date_period(from_d, to_d, current_period)
-                    print('set custom date period')
-                    dates, links = self._collect_dates_links()
-                    for pair in zip(dates, links):
-                        try:
-                            print(pair)
-                            # Pending.objects.create(date=pair[0], link=pair[1])
-                        except:
-                            print('failed to register link-date pair')
+                # loop through date periods
+                current_period = 1
+                date_ranges = self.generate_date_ranges(request.search_start_date, request.periods, request.periodicity)
+                for from_d, to_d in date_ranges:
+                    from_d = from_d.strftime('%m/%d/%Y')
+                    to_d = to_d.strftime('%m/%d/%Y')
+                    # ensure the current results page is not larger than variable "google_results_pages"
+                    current_page = 1
+                    while current_page <= request.google_results_pages:
+                        if current_page == 1:
+                            if current_period == 1:
+                                xpath = '//div[@id="hdtb-tls"]'
+                                self._get_element_by_xpath(xpath).click() # clicking Tools button, stays active during subsequent results pages so no need to repeat step
+                            self._set_custom_date_period(from_d, to_d, current_period)
+                            dates, links = self._collect_dates_links()
+                            for pair in zip(dates, links):
+                                try:
+                                    date = to_datetime(pair[0])
+                                    link = pair[1]
+                                    request.article_set.create(date=date, link=link)
+                                except: print('failed to register link-date pair')
+                            current_page += 1
 
-                elif current_page > 1:
-                    try:
-                        self._next_google_results_page(str(current_page))
-                        dates, links = self._collect_dates_links()
-                        for pair in zip(dates, links):
+                        elif current_page > 1:
                             try:
-                                print(pair)
-                                # Pending.objects.create(date=pair[0], link=pair[1])
+                                print(f'current page {current_page}')
+                                self._next_google_results_page(str(current_page))
+                                dates, links = self._collect_dates_links()
+                                for pair in zip(dates, links):
+                                    try:
+                                        date = to_datetime(pair[0])
+                                        link = pair[1]
+                                        request.article_set.create(date=date, link=link)
+                                    except: print('failed to register link-date pair')
+                                current_page += 1
                             except:
-                                print('failed to register link-date pair')
-                        current_page += 1
-                    except:
-                        current_page = self.google_results_pages+1
-            current_period +=1
-        # except:
-        #     print('scraper failed')
-        # finally:
-            # self.browser.quit()
+                                current_page = request.google_results_pages+1
+                    current_period +=1
+                request.status = 'Processing'
+                request.save()
+                if time.time() - start > work_time_sec:
+                    break
+        except:
+            print('date_link scraper failed')
+        finally:
+            self.browser.quit()
+    
+    def scrape_articles(self, work_time_sec=120):
+        try:
+            self.browser = self._open_new_browser()
+            start = time.time()
+            while True:
+                article = Article.objects.filter(status='Unprocessed').first()
+                self._browse_to_page(article.link)
+                title = self._collect_title()
+                results = self._collect_p_h_tags()
+
+                results = self.truncate_text_data(results, self.word_count_threshold)
+
+                for i, result in enumerate(results):
+
+                    tag_name, text = result
+
+                    article.text_set.create(text=text,
+                                            tag=tag_name,
+                                            position=i,
+                                            )
+                article.title = title
+                article.status = 'Processing'
+                article.save()
+                
+                if time.time() - start > work_time_sec:
+                    break
+        except:
+            print('article scraper failed')
+        finally:
+            self.browser.quit()
 
 

@@ -6,8 +6,6 @@ from yfinance_functions import store_ticker_info
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
-# from celery import current_app
-# from .tasks import update_ticker
 
 
 class TickerDetailView(View):
