@@ -4,13 +4,13 @@ User = get_user_model()
 
 # the following choices were introduced to restrict the extent of scraping. Free Heroku allows to store only so many rows.
 periodicity_choices = (
-    ('Daily', '1D'),
-    ('Bidaily', '2D'),
-    ('3-day', '3D'),
-    ('5-day', '5D'),
-    ('Weekly', 'W'),
-    ('Biweekly', '2W'),
-    ('Monthly', 'M'),
+    ('D', 'Daily'),
+    ('2D', 'Bidaily'),
+    ('3D', '3-day'),
+    ('5D', '5-day'),
+    ('W', 'Weekly'),
+    ('2W', 'Biweekly'),
+    ('M', 'Monthly'),
     )
 periods_choices = (
     (1, 1),
@@ -26,6 +26,10 @@ status_choices = (
     ('Processing','Processing'),
     ('Processed','Processed')
     )
+
+class ProcessingStatus(models.Model):
+    name = models.CharField(max_length=255, choices=(('SCRAPER','SCRAPER'),('MODEL','MODEL')))
+    status = models.CharField(max_length=255, choices=(('FREE','FREE'),('BUSY','BUSY')), default='FREE')
 
 class Request(models.Model):
     keyword = models.CharField(max_length=55)
@@ -52,7 +56,7 @@ class Text(models.Model):
     tag = models.CharField(max_length=55)
     position = models.IntegerField()
     article = models.ForeignKey(Article, on_delete=models.CASCADE, null=True)
-    sentiment = models.CharField(max_length=255, null=True, blank=True)
+    sentiment = models.TextField(null=True, blank=True)
     status = models.CharField(max_length=55, default='Unprocessed', choices=status_choices)
 
 

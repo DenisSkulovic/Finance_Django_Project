@@ -84,8 +84,10 @@ class ArticleTextCleaner(BaseTextCleaner):
         self.padding_type = padding_type
 
     def get_cleaned_element(self, element):
+        sentences = tokenize.sent_tokenize(element)
+
         element_words = self.split_article_to_lists_of_words(element)
-        sentences = [' '.join(sent) for sent in element_words]
+        element_sentences = [' '.join(sent) for sent in element_words]
         element_denoized = self.lemmatize_and_denoise_article(element_words)
         element_sentences = [' '.join(sent) for sent in element_denoized] # join words back into sentence after cleaning (sequencing works on sentence strings)
         element_sequences = self.article_to_sequences(element_sentences, self.tokenizer) # using tokenizer to convert lists of words into lists of numbers

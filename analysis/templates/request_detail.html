@@ -10,12 +10,16 @@
     <p>{{req.periodicity}}</p>
     <p>{{req.google_results_pages}}</p>
     <p>{{req.status}}</p>
+    <div>Scraper: <span id="scraper_status"></span></div>
+    <div>Model: <span id="model_status"></span></div>
+
 
     <div id='request_articles_div' class='container-fluid'>
         <div class="row d-inline-flex">
             {% for i in range %}
                 <div class='col-6 col-sm-4 col-md-3 col-lg-2 p-2 mb-4 request_article_div' id='request_article_div_{{i}}' hidden>
                     {% include 'snippets/article_snippet.html' %}
+                    <span id='request_article_status_{{i}}' hidden>Empty</span>
                 </div>
             {% endfor %}
         </div>
@@ -25,22 +29,28 @@
 
 {% block javascript %}
     <script>
+
     function refresh_request_status(){
         console.log('refresh_request_status activated')
         $.ajax({
             url:"{% url 'refresh_request_status' %}",
             type: 'POST',
-            data: { pk: "{{req.pk}}"},
+            data: { request_pk: "{{req.pk}}"},
             dataType: 'json',
-            success: (statuses) => {
-                let request_article_div;
+            success: (data) => {
+                let scraper_status = data['scraper_status'];
+                let model_status = data['model_status'];
+                let statuses = data['statuses']
+
+                document.getElementById('scraper_status').innerHTML = scraper_status
+                document.getElementById('model_status').innerHTML = model_status
+
                 let request_article_status;
-                for (i=0;i<statuses['statuses'].length; i++){
-                    request_article_div = document.getElementById(`request_article_div_${i}`);
-                    request_article_status = request_article_div.getElementsByClassName('request_article_status').value;
+                for (i=0;i<statuses.length; i++){
+                    request_article_status_span = document.getElementById(`request_article_status_${i}`)
                     
-                    if (statuses[i] != request_article_status){
-                        load_article_content(i)
+                    if (statuses[i] != request_article_status_span){
+                        load_request_article_content(i)
                         }            
                 
                 }
@@ -49,10 +59,10 @@
     }
 
 
-    function load_article_content(article_index){
-        console.log('load_article_content activated')
+    function load_request_article_content(article_index){
+        console.log('load_request_article_content activated')
         $.ajax({
-            url:"{% url 'load_article_content' %}",
+            url:"{% url 'load_request_article_content' %}",
             type: 'POST',
             data: { article_index: article_index,
                     request_pk: "{{req.pk}}"},
@@ -83,17 +93,17 @@
     }
 
 
-    function load_initial_content(){
-        console.log('load_initial_content activated')
+    function request_load_initial_content(){
+        console.log('request_load_initial_content activated')
         $.ajax({
-            url:"{% url 'load_initial_content' %}",
+            url:"{% url 'request_load_initial_content' %}",
             type: 'POST',
-            data: { pk: "{{req.pk}}"},
+            data: { request_pk: "{{req.pk}}"},
             dataType: 'json',
             success: (articles_len) => {
                 
                 for (i=0; i<articles_len['articles_len']; i++) {
-                    load_article_content(i)
+                    load_request_article_content(i)
                 }
             }        
         })
@@ -103,8 +113,8 @@
     $(document).ready(
         $(window).on("load", (e)=>{
             e.preventDefault();
-            load_initial_content();
-            setInterval(refresh_request_status, 5000);
+            request_load_initial_content();
+            setInterval(refresh_request_status, 2000);
         })
     )
     </script>

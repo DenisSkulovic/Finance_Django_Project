@@ -10,21 +10,50 @@
 
 {% block javascript %}
     <script>
-    $('#NN_textarea').on("keyup", (e) => {
+
+
+    $(window).on('load', (e) => {
         e.preventDefault()
-        console.log('send_data_for_NN_analysis activated')
-        console.log($("#NN_textarea").val())
         $.ajax({
-            url:"{% url 'evaluate' %}",
+            url:"{% url 'change_model_status_js' %}",
             type: 'POST',
-            data: { text: $("#NN_textarea").val() },
+            data: { status: 'BUSY' },
             dataType: 'json',
-            success: (outputs) => {
-                console.log(outputs.html);
-                $("#NN_result_div").html(outputs.html);
+            success: (data) => {
+                console.log('reserved model')
+                console.log(data['status'])
+
+                setInterval(() => {
+                    $.ajax({
+                        url:"{% url 'playground' %}",
+                        type: 'POST',
+                        data: { text: $("#NN_textarea").val() },
+                        dataType: 'json',
+                        success: (data) => {
+                            console.log(data)
+                            document.getElementById('NN_result_div').innerHTML = data['html'];
+                            }
+                        })
+                    }, 2000)
             }
         })
-    });
+    })
+
+    $(window).on('unload', (e) => {
+        e.preventDefault()
+        $.ajax({
+            url:"{% url 'change_model_status_js' %}",
+            type: 'POST',
+            data: { status: 'FREE' },
+            dataType: 'json',
+            success: (data) => {
+                console.log('unreserved model')
+                console.log(data['status'])
+            }
+        })
+    })
+
+
         
     </script>
 {% endblock javascript %}
