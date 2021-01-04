@@ -1,5 +1,12 @@
 from django.shortcuts import render
-from django.views.generic import TemplateView, ListView, DetailView, CreateView
+from django.views.generic import (
+    TemplateView, 
+    ListView, 
+    DetailView, 
+    CreateView, 
+    View,
+    DeleteView,
+    )
 from scraper.models import Request, Article, Text, ProcessingStatus
 from analysis.forms import RequestCreateForm
 from django.views.decorators.csrf import csrf_exempt
@@ -12,6 +19,19 @@ from django.contrib.auth.decorators import login_required
 from django.forms.models import model_to_dict
 from nltk import tokenize
 
+
+
+class RequestsView(View):
+    def get(self, request):
+        context = {
+            'range': range(50),
+        }
+        return render(request, 'requests.html', context)
+
+class RequestDeleteView(DeleteView):
+    template_name = 'request_confirm_delete.html'
+    model = Request
+    success_url = reverse_lazy('requests')
 
 
 class PlaygroundTemplateView(TemplateView):
@@ -42,7 +62,6 @@ class RequestCreateView(LoginRequiredMixin, CreateView):
 @login_required
 def request_detail_view(request, pk):
     req = Request.objects.get(pk=pk)
-    print('req: ', req)
     context = {
         'req':req,
         'range':range(50),
@@ -60,6 +79,10 @@ def article_detail_view(request, pk):
     }
     return render(request, 'article_detail.html', context=context)
 
+
+
+
+# various Python functions
 
 def get_sentence_html(sentence, prediction):
     if prediction > 0.85:
@@ -106,6 +129,11 @@ def get_playground_html(data):
     return html
 
 
+
+
+
+# Javascript related functions
+
 @csrf_exempt
 def article_detail_html(request):
     if request.method == 'POST':
@@ -132,6 +160,21 @@ def playground(request):
 
 
 
+@csrf_exempt
+def refresh_requests_status(request):
+    if request.method == 'POST':
+        try: scraper_status = ProcessingStatus.objects.get(name='SCRAPER').status
+        except: scraper_status = 'FREE'
+        try: model_status = ProcessingStatus.objects.get(name='MODEL').status
+        except: model_status = 'FREE'
+
+        user = request.user
+        requests = Request.objects.filter(user=user)
+        statuses = [req.status for req in requests]
+        data = {'statuses':statuses, 
+                'scraper_status':scraper_status, 
+                'model_status':model_status}
+        return JsonResponse(data, status=201, safe=False)
 
 @csrf_exempt
 def refresh_request_status(request):
@@ -171,6 +214,13 @@ def refresh_article_status(request):
 
 
 @csrf_exempt
+def requests_load_initial_content(request):
+    if request.method == 'POST':
+        user = request.user
+        requests_len = len(Request.objects.filter(user=user))
+        return JsonResponse({'requests_len':requests_len}, status=201, safe=False)
+
+@csrf_exempt
 def request_load_initial_content(request):
     if request.method == 'POST':
         articles_len = len(Request.objects.get(pk=request.POST['request_pk']).article_set.all())
@@ -183,8 +233,13 @@ def article_load_initial_content(request):
         return JsonResponse({'texts_len':texts_len}, status=201, safe=False)       
 
 
-
-
+@csrf_exempt
+def load_requests_request_content(request):
+    user = request.user
+    request_index = int(request.POST['request_index'])
+    requests = Request.objects.filter(user=user)
+    req = model_to_dict(requests[request_index])
+    return JsonResponse({'req':req, 'request_index':request_index}, status=201, safe=False)
 
 @csrf_exempt
 def load_request_article_content(request):
@@ -208,6 +263,8 @@ def load_article_text_content(request):
             predictions = list(map(lambda x: float(x), predictions))
             text['text'] = ' '.join([get_sentence_html(sentence, prediction) for sentence, prediction in zip(sentences, predictions)])
         return JsonResponse({'text':text, 'text_index':text_index}, status=201, safe=False)
+
+
 
 
 @csrf_exempt

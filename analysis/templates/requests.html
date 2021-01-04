@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+    <div>Scraper: <span id="scraper_status"></span></div>
+    <div>Model: <span id="model_status"></span></div>
+
+    <div class="container mt-3" id="requests-div">
+        <div class="row d-flex flex-wrap">
+
+
+                {% for i in range %}
+
+                    <div class="card w-25 border-light  bg-light shadow ml-3 mr-3 mb-5" id="request-{{i}}" hidden>
+                        <div class="card-header" id="request-keyword-{{i}}">
+                            <h5>Airline Stocks</h5>
+                        </div>
+                        <div class="card-body d-flex-row">
+                            <div class="card-text d-flex justify-content-between">
+                                <p>Periods:</p>
+                                <p id="request-periods-{{i}}"></p>
+                            </div>
+                            <div class="card-text d-flex justify-content-between">
+                                <p>Periodicity:</p>
+                                <p id="request-periodicity-{{i}}"></p>
+                            </div>
+                            <div class="card-text d-flex justify-content-between">
+                                <p>Results Pages:</p>
+                                <p id="request-google-results-pages-{{i}}"></p>
+                            </div>
+                            <div class="card-text d-flex justify-content-between">
+                                <p>Status:</p>
+                                <p id="request-status-{{i}}">{{req.status}}</p>
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            <a href="#" class="btn btn-secondary btn-block">Delete</a>
+                        </div>
+                    </div>
+
+                 {% endfor %}
+
+
+        </div>
+    </div>
+{% endblock content %}
+
+
+{% block javascript %}
+    <script>
+        function requests_load_initial_content() {
+        console.log('requests_load_initial_content activated')
+        $.ajax({
+            url:"{% url 'requests_load_initial_content' %}",
+            type: 'POST',
+            data: { user: "{{user}}"},
+            dataType: 'json',
+            success: (data) => {
+                
+                for (i=0; i<data['requests_len']; i++) {
+                    load_requests_request_content(i)
+                }
+            }        
+        })
+    }
+
+        function refresh_requests_status() {
+        console.log('refresh_requests_status activated')
+
+        $.ajax({
+            url:"{% url 'refresh_requests_status' %}",
+            type: 'POST',
+            data: { user: "{{user}}"},
+            dataType: 'json',
+            success: (data) => {
+                let scraper_status = data['scraper_status'];
+                let model_status = data['model_status'];
+                document.getElementById('scraper_status').innerHTML = scraper_status;
+                document.getElementById('model_status').innerHTML = model_status;
+
+                let statuses = data['statuses'];
+
+                let request_article_status;
+                for (i=0;i<statuses.length; i++){
+                    request_status_div = document.getElementById(`request-status-${i}`)
+                    
+                    if (statuses[i] != request_status_div){
+                        load_requests_request_content(i)
+                        }            
+                    }
+                }
+            })
+        }
+
+        function load_requests_request_content(request_index) {
+        console.log('load_requests_request_content activated')
+        $.ajax({
+            url:"{% url 'load_requests_request_content' %}",
+            type: 'POST',
+            data: { request_index: request_index,
+                    user: "{{user}}"},
+            dataType: 'json',
+            success: (data) => {
+                let request_index = data.request_index;
+                let request = data.req;
+                console.log(request)
+                request_div = document.getElementById(`request-${request_index}`);
+
+                keyword_elem = document.getElementById(`request-keyword-${request_index}`);
+                keyword_elem.innerHTML = `<a href="/analysis/request/${request.id}">${request.keyword}</a>`;
+
+                periods_elem = document.getElementById(`request-periods-${request_index}`);
+                periods_elem.innerHTML = request.periods;
+
+                google_results_pages_elem = document.getElementById(`request-google-results-pages-${request_index}`);
+                google_results_pages_elem.innerHTML = request.google_results_pages;
+
+                periodicity_elem = document.getElementById(`request-periodicity-${request_index}`);
+                periodicity_elem.innerHTML = request.periodicity;
+                
+                status_elem = document.getElementById(`request-status-${request_index}`);
+                status_elem.innerHTML = request.status;
+
+                delete_btn = document.getElementById(`request-delete-btn-${request_index}`)
+                delete_btn.href = `/analysis/request/delete/${request.id}`
+                
+                try{
+                    request_div.removeAttribute("hidden");
+                    }
+                catch{}
+            }
+        })
+        }
+
+        $(document).ready(
+            $(window).on("load", (e)=>{
+                e.preventDefault();
+                requests_load_initial_content();
+                setInterval(refresh_requests_status, 2000);
+            })
+        )
+    </script
+{% endblock javascript %}
+

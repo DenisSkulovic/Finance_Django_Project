@@ -3,27 +3,69 @@
 
 
 {% block content %}
-
-    <p>{{req.keyword}}</p>
-    <p>{{req.search_start_date}}</p>
-    <p>{{req.periods}}</p>
-    <p>{{req.periodicity}}</p>
-    <p>{{req.google_results_pages}}</p>
-    <p>{{req.status}}</p>
-    <div>Scraper: <span id="scraper_status"></span></div>
-    <div>Model: <span id="model_status"></span></div>
-
-
-    <div id='request_articles_div' class='container-fluid'>
-        <div class="row d-inline-flex">
-            {% for i in range %}
-                <div class='col-6 col-sm-4 col-md-3 col-lg-2 p-2 mb-4 request_article_div' id='request_article_div_{{i}}' hidden>
-                    {% include 'snippets/article_snippet.html' %}
-                    <span id='request_article_status_{{i}}' hidden>Empty</span>
+    <div class="container">
+        <div class="row">
+            <div class="col-xs-12 col-sm-6 col-md-3">
+                <div class="row">
+                    <div>
+                        <div class="card border-light  bg-light shadow ml-2 mr-2 mb-5">
+                            <div class="card-header">
+                                <h5>{{req.keyword}}</h5>
+                            </div>
+                            <div class="card-body d-flex-row">
+                                <div class="card-text d-flex justify-content-between">
+                                    <p>Periods:</p>
+                                    <p>{{req.periods}}</p>
+                                </div>
+                                <div class="card-text d-flex justify-content-between">
+                                    <p>Periodicity:</p>
+                                    <p>{{req.periodicity}}</p>
+                                </div>
+                                <div class="card-text d-flex justify-content-between">
+                                    <p>Results Pages:</p>
+                                    <p>{{req.google_results_pages}}</p>
+                                </div>
+                                <div class="card-text d-flex justify-content-between">
+                                    <p>Status:</p>
+                                    <p>{{req.status}}</p>
+                                </div>
+                            </div>
+                            <div class="card-footer">
+                                <a href="{% url 'request_delete' pk=req.id %}" class="btn btn-danger btn-block">Delete</a>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            {% endfor %}
-        </div>
+
+                <div>
+                    <div>Scraper: <span id="scraper_status"></span></div>
+                    <div>Model: <span id="model_status"></span></div>
+                </div>
+            </div>
+            <div class="col-xs-12 col-sm-6 col-md-9">
+                <div id='request-articles-div' class='container-fluid'>
+                    <div class="row d-inline-flex">
+
+                        {% for i in range %}
+                            <div class="container mt-3 request-article-div" id='request-article-div-{{i}}' hidden>
+                                <ul class="list-group">
+                                    <li class="list-group-item shadow">
+                                        <span class="float-left"><span id="request-article-date-{{i}}"></span> | <span id="request-article-link-{{i}}"></span></span>
+                                        <p id="request-article-title-{{i}}"></p>
+                                        <span>Status:</span> <span id="request-article-status-{{i}}"></span>
+                                    </li>
+                                </ul>
+                            </div>
+
+                        {% endfor %}
+
+                    </div>
+                </div>
+            </div>
+        </div>  
     </div>
+
+
 {% endblock content %}
 
 
@@ -47,9 +89,11 @@
 
                 let request_article_status;
                 for (i=0;i<statuses.length; i++){
-                    request_article_status_span = document.getElementById(`request_article_status_${i}`)
-                    
-                    if (statuses[i] != request_article_status_span){
+                    request_article_status_span = document.getElementById(`request-article-status-${i}`)
+                    request_article_status = request_article_status_span.innerHTML
+                    if (statuses[i] != request_article_status){
+                        console.log(statuses[i])
+                        console.log(request_article_status)
                         load_request_article_content(i)
                         }            
                 
@@ -70,19 +114,20 @@
             success: (data) => {
                 let article_index = data.article_index;
                 let article = data.article;
-                request_article_div = document.getElementById(`request_article_div_${article_index}`);
+                request_article_div = document.getElementById(`request-article-div-${article_index}`);
 
-                title_elem = request_article_div.getElementsByClassName('request_article_title')[0];
+                title_elem = document.getElementById(`request-article-title-${article_index}`);
                 title_elem.innerHTML = `<a href="/analysis/article/${article.id}">${article.title}</a>`;
 
-                date_elem = request_article_div.getElementsByClassName('request_article_date')[0];
+                date_elem = document.getElementById(`request-article-date-${article_index}`);
                 date_elem.innerHTML = `${article.date}`;
 
-                link_elem = request_article_div.getElementsByClassName('request_article_link')[0];
+                link_elem = document.getElementById(`request-article-link-${article_index}`);
                 link_elem.innerHTML = `<a href="${article.link}">Link</a>`;
 
-                status_elem = request_article_div.getElementsByClassName('request_article_status')[0];
-                status_elem.innerHTML = `Status: ${article.status}`;
+                status_elem = document.getElementById(`request-article-status-${article_index}`);
+                status_elem.innerHTML = `${article.status}`;
+
                 
                 try{
                     request_article_div.removeAttribute("hidden");

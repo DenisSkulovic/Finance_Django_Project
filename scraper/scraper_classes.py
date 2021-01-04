@@ -296,6 +296,10 @@ class GoogleScraper(BaseScraper):
 
 
     def scrape_dates_links(self, work_time_sec=120):
+        if Request.objects.filter(status='Unprocessed').first() == None:
+            print('dates links scraper exited')
+            return
+
         scraper_status = ProcessingStatus.objects.get_or_create(name='SCRAPER')[0]
         if scraper_status.status == 'FREE':
             try:
@@ -374,7 +378,12 @@ class GoogleScraper(BaseScraper):
 
     
     def scrape_articles(self, work_time_sec=120):
+        if Article.objects.filter(status='Unprocessed').first() == None:
+            print('article scraper exited')
+            return
+
         scraper_status = ProcessingStatus.objects.get_or_create(name='SCRAPER')[0]
+        
         if scraper_status.status == 'FREE':
             try:
 

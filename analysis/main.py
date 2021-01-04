@@ -3,6 +3,10 @@ from scraper.models import Request, Article, Text, ProcessingStatus
 import time
 
 def process_text(work_time_sec=120):
+    if Text.objects.filter(status='Unprocessed').first() == None:
+        print('text_processor exited')
+        return
+
     start = time.time()
     try:
         while True:

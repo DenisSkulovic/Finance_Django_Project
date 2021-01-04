@@ -39,7 +39,9 @@ class Request(models.Model):
     google_results_pages = models.IntegerField(choices=google_results_pages_choices)
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
     status = models.CharField(max_length=55, default='Unprocessed', choices=status_choices)
-
+    accessibility = models.CharField(max_length=55, choices=(('Private','Private'),('Public','Public')), default='Private')
+    def __str__(self):
+        return f'Keyword: {self.keyword}; Status: {self.status}'
 
 class Article(models.Model):
     title = models.TextField(default='Queued for scraping.')
