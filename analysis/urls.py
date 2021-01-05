@@ -8,11 +8,14 @@ urlpatterns = [
     path('request/delete/<int:pk>', views.RequestDeleteView.as_view(), name='request_delete'),
     path('request/<int:pk>', views.request_detail_view, name='request_detail'),
     path('article/<int:pk>', views.article_detail_view, name='article_detail'),
-    path('requests/', views.RequestsView.as_view(), name='requests'),
+    path('requests/<str:mode>', views.RequestsView.as_view(), name='requests'),
+    path('requests/change_privacy/', views.change_accessibility, name='change_accessibility'),
+
 
     path('ajax/refresh_processor_status', views.refresh_processor_status, name='refresh_processor_status'),
 
     path('ajax/playground', views.playground, name='ajax_playground'),
+    path('ajax/text_example_js', views.text_example_js, name='text_example_js'),
 
     path('ajax/refresh_requests_status', views.refresh_requests_status, name='refresh_requests_status'),
     path('ajax/refresh_request_status', views.refresh_request_status, name='refresh_request_status'),

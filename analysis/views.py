@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.views.generic import (
     TemplateView, 
     ListView, 
@@ -10,32 +10,72 @@ from django.views.generic import (
 from scraper.models import Request, Article, Text, ProcessingStatus
 from analysis.forms import RequestCreateForm
 from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 from django.http import JsonResponse, HttpResponseRedirect
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse
 from finance_proj.settings import TEXT_CLEANER, MODEL
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import login_required
 from django.forms.models import model_to_dict
 from nltk import tokenize
+from django.contrib.auth.mixins import UserPassesTestMixin
+
+
+
+
+class PlaygroundTemplateView(View):
+    def get(self, request):
+        model_status = ProcessingStatus.objects.get(name="MODEL").status
+        if model_status == "BUSY":
+            return redirect(reverse_lazy('mainpage'))
+        context = {}
+        return render(request, 'playground.html', context)
+
 
 
 
 class RequestsView(View):
-    def get(self, request):
+    def get(self, request, mode):
         context = {
             'range': range(50),
+            'mode': mode,
         }
         return render(request, 'requests.html', context)
 
-class RequestDeleteView(DeleteView):
+
+
+def change_accessibility(request):
+    if request.method == "GET":
+        if request.user.is_authenticated:
+            user = request.user
+            mode = request.GET['mode']
+            request_index = int(request.GET['request_index'])
+            new_privacy = request.GET['new_privacy']
+            requests = get_requests(mode, user)
+
+            req = requests[request_index]
+
+            if req.user != user:
+                return redirect(reverse_lazy('account_login'))
+            req.accessibility = new_privacy
+            req.save()
+            return redirect(f'/analysis/requests/{mode}')
+        else:
+            return redirect(reverse_lazy('account_login'))
+
+
+
+class RequestDeleteView(UserPassesTestMixin, LoginRequiredMixin, DeleteView):
     template_name = 'request_confirm_delete.html'
     model = Request
     success_url = reverse_lazy('requests')
+    def test_func(self):
+        obj = self.get_object()
+        return obj.user == self.request.user
+    def handle_no_permission(self):
+        return redirect(reverse_lazy('account_login'))
 
-
-class PlaygroundTemplateView(TemplateView):
-    template_name = 'playground.html'
 
 
 
@@ -59,7 +99,8 @@ class RequestCreateView(LoginRequiredMixin, CreateView):
 
 
 
-@login_required
+
+
 def request_detail_view(request, pk):
     req = Request.objects.get(pk=pk)
     context = {
@@ -68,7 +109,6 @@ def request_detail_view(request, pk):
         }
     return render(request, 'request_detail.html', context=context)
 
-@login_required
 def article_detail_view(request, pk):
     article = Article.objects.get(pk=pk)
     texts = article.text_set.all()
@@ -81,34 +121,33 @@ def article_detail_view(request, pk):
 
 
 
-
 # various Python functions
 
 def get_sentence_html(sentence, prediction):
     if prediction > 0.85:
-        return f'<span style="background-color:#03DF04">{sentence}</span>'
+        return f'<span class="mr-1" style="background-color:#03DF04">{sentence}</span>'
     elif prediction > 0.60:
-        return f'<span style="background-color:#2AED2D">{sentence}</span>'
+        return f'<span class="mr-1" style="background-color:#2AED2D">{sentence}</span>'
     elif prediction > 0.45:
-        return f'<span style="background-color:#62F163">{sentence}</span>'
+        return f'<span class="mr-1" style="background-color:#62F163">{sentence}</span>'
     elif prediction > 0.30:
-        return f'<span style="background-color:#A0F9A0">{sentence}</span>'
+        return f'<span class="mr-1" style="background-color:#A0F9A0">{sentence}</span>'
     elif prediction > 0.15:
-        return f'<span style="background-color:#D8FCD8">{sentence}</span>'
+        return f'<span class="mr-1" style="background-color:#D8FCD8">{sentence}</span>'
     elif prediction > 0.00:
-        return f'<span style="background-color:#FFFFFE">{sentence}</span>'
+        return f'<span class="mr-1" style="background-color:#FFFFFE">{sentence}</span>'
     elif prediction > -0.15:
-        return f'<span style="background-color:#FFDBDD">{sentence}</span>'
+        return f'<span class="mr-1" style="background-color:#FFDBDD">{sentence}</span>'
     elif prediction > -0.30:
-        return f'<span style="background-color:#F6BDC0">{sentence}</span>'
+        return f'<span class="mr-1" style="background-color:#F6BDC0">{sentence}</span>'
     elif prediction > -0.45:
-        return f'<span style="background-color:#F1959B">{sentence}</span>'
+        return f'<span class="mr-1" style="background-color:#F1959B">{sentence}</span>'
     elif prediction > -0.60:
-        return f'<span style="background-color:#F07470">{sentence}</span>'
+        return f'<span class="mr-1" style="background-color:#F07470">{sentence}</span>'
     elif prediction > -0.85:
-        return f'<span style="background-color:#EA4C46">{sentence}</span>'
+        return f'<span class="mr-1" style="background-color:#EA4C46">{sentence}</span>'
     else:
-        return f'<span style="background-color:#DC1C13">{sentence}</span>'
+        return f'<span class="mr-1" style="background-color:#DC1C13">{sentence}</span>'
 
 
 
@@ -130,9 +169,20 @@ def get_playground_html(data):
 
 
 
+def get_requests(mode, user):
+        if mode == "PRIVATE":
+            return Request.objects.filter(user=user, accessibility='Private')
+        elif mode == "PUBLIC":
+            return Request.objects.filter(accessibility='Public')
+        elif mode == "PUBLICOWN":
+            return Request.objects.filter(user=user, accessibility='Public')
+        elif mode == "OWN":
+            return Request.objects.filter(user=user)
+
 
 
 # Javascript related functions
+
 
 @csrf_exempt
 def refresh_processor_status(request):
@@ -177,9 +227,9 @@ def playground(request):
 @csrf_exempt
 def refresh_requests_status(request):
     if request.method == 'POST':
-
+        mode = request.POST['mode']
         user = request.user
-        requests = Request.objects.filter(user=user)
+        requests = get_requests(mode, user)
         statuses = [req.status for req in requests]
         data = {'statuses':statuses}
         return JsonResponse(data, status=201, safe=False)
@@ -212,8 +262,10 @@ def refresh_article_status(request):
 @csrf_exempt
 def requests_load_initial_content(request):
     if request.method == 'POST':
+        mode = request.POST['mode']
         user = request.user
-        requests_len = len(Request.objects.filter(user=user))
+        requests = get_requests(mode, user)
+        requests_len = len(requests)
         return JsonResponse({'requests_len':requests_len}, status=201, safe=False)
 
 @csrf_exempt
@@ -229,11 +281,14 @@ def article_load_initial_content(request):
         return JsonResponse({'texts_len':texts_len}, status=201, safe=False)       
 
 
+
+
 @csrf_exempt
 def load_requests_request_content(request):
+    mode = request.POST['mode']
     user = request.user
     request_index = int(request.POST['request_index'])
-    requests = Request.objects.filter(user=user)
+    requests = get_requests(mode, user)
     req = model_to_dict(requests[request_index])
     return JsonResponse({'req':req, 'request_index':request_index}, status=201, safe=False)
 
@@ -276,3 +331,32 @@ def change_model_status_js(request):
         }
         return JsonResponse(data, status=201, safe=False)
         
+
+@csrf_exempt
+def text_example_js(request):
+    if request.method == 'POST':
+        print('Im here')
+        example_id = request.POST['button_id']
+        print(example_id)
+
+        if example_id == 'example-1':
+            example_text = '''\
+Alas, the COVID-19 pandemic has threatened to undermine the good work the industry did. Airline revenue fell 90% year over year during the second quarter of 2020 as the pandemic dried up travel demand. Few businesses can survive that sort of revenue drop, and most airline stocks lost 50% or more of their value as the pandemic spread globally.
+
+The good news is that no U.S. airline has had to declare bankruptcy to date. The industry in the first half of 2020 raised more than $50 billion in private funding, alongside a similar amount of government assistance, to help weather the storm. But with travel volumes expected to take years to return to pre-pandemic levels, investors buying in now will be waiting on a multiyear turnaround even in the best-case scenario.
+'''
+        elif example_id == 'example-2':
+            example_text = '''\
+It was a rocky first trading day of the year for Wall Street as stocks fell sharply and investors grew worried about the the pandemic and the economic recovery in 2021.
+
+Investors took profits off the market's record highs set last week, and they took a more cautious position ahead of the high-stakes runoff election in Georgia Tuesday, which will decide the balance in the Senate, analysts said.
+
+Wall Street had started the day in the green, putting stocks on track to start the New Year off with a bang. The Dow (INDU) and the S&P 500 (SPX) finished at record highs on the last trading day of 2020. But trading quickly turned south Monday.
+'''
+        elif example_id == 'example-3':
+            example_text = '''\
+Less than three weeks ago, a new variant of the SARS-CoV-2 virus, which causes COVID-19, was identified in the United Kingdom. The mutability of the virus has the potential to cause serious problems. For example, differences in transmission or mortality rate could induce strict lockdowns that further ravage the economy. It's also possible that emergency use-approved and experimental vaccines may prove ineffective or less effective against new variants of the virus. 
+'''
+        print(example_text)
+        data = {"example_text": example_text}
+        return JsonResponse(data, status=201, safe=False)

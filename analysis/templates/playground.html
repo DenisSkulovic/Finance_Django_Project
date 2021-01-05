@@ -1,11 +1,23 @@
 {% extends 'base.html' %}
 
 {% block content %}
+        
+<h2 class='text-center mb-4'>PLAYGROUND</h2>
+
     <div class="row">
-        <div class="col-md-6">
-            <textarea class="form-control" rows=15 id="NN_textarea" placeholder="Enter your text here..."></textarea>
+        <div class="col-md-2">
+            <p>Start typing and the model will color the text based on its financial sentiment assessment.</p>
+            <p>You could also copy-paste a piece on any article for instant analysis.</p>
+            <div class="btn-group-vertical btn-block">
+                <a id="example-1" class="btn text-white btn-primary">Example 1</a>
+                <a id="example-2" class="btn text-white btn-primary">Example 2</a>
+                <a id="example-3" class="btn text-white btn-primary">Example 3</a>
+            </div>
         </div>
-        <div class="col-md-6">
+        <div class="col-md-5">
+            <textarea class="form-control" rows=20 id="NN_textarea" placeholder="Enter your text here..."></textarea>
+        </div>
+        <div class="col-md-5">
             <div class="form-control h-100"  placeholder="Results will appear here." id="NN_result_div">
             </div>
         </div>
@@ -60,6 +72,24 @@
         })
     })
 
+    function text_example_js(e) {
+        e.preventDefault()
+        button_id = e.srcElement.id
+        $.ajax({
+            url:"{% url 'text_example_js' %}",
+            type: 'POST',
+            data: { button_id: button_id },
+            dataType: 'json',
+            success: (data) => {
+                textarea = document.getElementById("NN_textarea")
+                textarea.value = ''
+                textarea.value = data['example_text']
+                }
+        })}
+
+    example_1_btn = document.getElementById('example-1').addEventListener('click', text_example_js)
+    example_2_btn = document.getElementById('example-2').addEventListener('click', text_example_js)
+    example_3_btn = document.getElementById('example-3').addEventListener('click', text_example_js)
 
         
     </script>

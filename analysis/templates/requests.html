@@ -2,13 +2,20 @@
 
 {% block content %}
     <h2 class='text-center mb-4'>REQUESTS</h2>
+
     <div class="row" id="requests-div">
 
         <div class="col-xs-12 col-sm-4 col-md-3 col-lg-2  mt-2">
-            <div class="btn-group-vertical btn-block  ml-3">
-                <a class="btn btn-success" href="{% url 'request_create' %}">New Request</a>
-                <a class="btn btn-primary" href="{% url 'request_create' %}">New Request</a>
+            <a class="btn btn-success btn-block" href="{% url 'request_create' %}">New Request</a>
+            
+            {% if user.is_authenticated %}
+            <div class="btn-group-vertical btn-block">
+                <a class="btn btn-primary" href="{% url 'requests' mode="PRIVATE" %}">Private</a>
+                <a class="btn btn-primary" href="{% url 'requests' mode="PUBLIC" %}">Public</a>
+                <a class="btn btn-primary" href="{% url 'requests' mode="OWN" %}">Own</a>
+                <a class="btn btn-primary" href="{% url 'requests' mode="PUBLICOWN" %}">Public Own</a>
             </div>
+            {% endif %}
         </div>
 
         <div class="col-xs-12 col-sm-8 col-md-9  col-lg-10 d-flex flex-wrap container-fluid">
@@ -35,9 +42,20 @@
                         <p>Status:</p>
                         <p id="request-status-{{i}}">{{req.status}}</p>
                     </div>
+                    <div class="card-text d-flex justify-content-between">
+                        <p>Privacy:</p>
+                        <p id="request-privacy-{{i}}"></p>
+                    </div>
                 </div>
                 <div class="card-footer">
-                    <a id='request-delete-btn-{{i}}' href="#" class="btn btn-danger btn-block">Delete</a>
+                    <div class="btn-group d-flex  btn-block" role="group" >
+                        <a style="flex:1;" id='request-delete-btn-{{i}}' href="#" class="btn btn-default">Delete</a>
+                        <a style="flex:1;" id='dropdownMenuLink' data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" href="#" class="btn btn-default">Privacy</a>
+                        <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                            <a id="privacy-button-private-{{i}}" class="dropdown-item  privacy-button  privacy-button-private" href="/analysis/requests/change_privacy/?&mode={{mode}}&request_index={{i}}&new_privacy=Private">Private</a>
+                            <a id="privacy-button-public-{{i}}" class="dropdown-item  privacy-button  privacy-button-public" href="/analysis/requests/change_privacy/?&mode={{mode}}&request_index={{i}}&new_privacy=Public"">Public</a>
+                        </div>
+                    </div>  
                 </div>
             </div>
 
@@ -52,84 +70,90 @@
     {{ block.super }}
     <script>
         function requests_load_initial_content() {
-        console.log('requests_load_initial_content activated')
-        $.ajax({
-            url:"{% url 'requests_load_initial_content' %}",
-            type: 'POST',
-            data: { user: "{{user}}"},
-            dataType: 'json',
-            success: (data) => {
-                
-                for (i=0; i<data['requests_len']; i++) {
-                    load_requests_request_content(i)
-                }
-            }        
-        })
-    }
-
-        function refresh_requests_status() {
-        console.log('refresh_requests_status activated')
-
-        $.ajax({
-            url:"{% url 'refresh_requests_status' %}",
-            type: 'POST',
-            data: { user: "{{user}}"},
-            dataType: 'json',
-            success: (data) => {
-
-                let statuses = data['statuses'];
-
-                let request_article_status;
-                for (i=0;i<statuses.length; i++){
-                    request_status_div = document.getElementById(`request-status-${i}`)
+            console.log('requests_load_initial_content activated')
+            $.ajax({
+                url:"{% url 'requests_load_initial_content' %}",
+                type: 'POST',
+                data: { mode: "{{mode}}"},
+                dataType: 'json',
+                success: (data) => {
                     
-                    if (statuses[i] != request_status_div){
+                    for (i=0; i<data['requests_len']; i++) {
                         load_requests_request_content(i)
-                        }            
                     }
-                }
+                }        
             })
         }
 
-        function load_requests_request_content(request_index) {
-        console.log('load_requests_request_content activated')
-        $.ajax({
-            url:"{% url 'load_requests_request_content' %}",
-            type: 'POST',
-            data: { request_index: request_index,
-                    user: "{{user}}"},
-            dataType: 'json',
-            success: (data) => {
-                let request_index = data.request_index;
-                let request = data.req;
-                console.log(request)
-                request_div = document.getElementById(`request-${request_index}`);
+        function refresh_requests_status() {
+            console.log('refresh_requests_status activated')
 
-                keyword_elem = document.getElementById(`request-keyword-${request_index}`);
-                keyword_elem.innerHTML = `<a href="/analysis/request/${request.id}">${request.keyword}</a>`;
+            $.ajax({
+                url:"{% url 'refresh_requests_status' %}",
+                type: 'POST',
+                data: { mode: "{{mode}}"},
+                dataType: 'json',
+                success: (data) => {
 
-                periods_elem = document.getElementById(`request-periods-${request_index}`);
-                periods_elem.innerHTML = request.periods;
+                    let statuses = data['statuses'];
 
-                google_results_pages_elem = document.getElementById(`request-google-results-pages-${request_index}`);
-                google_results_pages_elem.innerHTML = request.google_results_pages;
-
-                periodicity_elem = document.getElementById(`request-periodicity-${request_index}`);
-                periodicity_elem.innerHTML = request.periodicity;
-                
-                status_elem = document.getElementById(`request-status-${request_index}`);
-                status_elem.innerHTML = request.status;
-
-                delete_btn = document.getElementById(`request-delete-btn-${request_index}`)
-                delete_btn.href = `/analysis/request/delete/${request.id}`
-                
-                try{
-                    request_div.removeAttribute("hidden");
+                    let request_article_status;
+                    for (i=0;i<statuses.length; i++){
+                        request_status_div = document.getElementById(`request-status-${i}`)
+                        
+                        if (statuses[i] != request_status_div){
+                            load_requests_request_content(i)
+                            }            
+                        }
                     }
-                catch{}
+                })
             }
-        })
-        }
+
+        function load_requests_request_content(request_index) {
+            console.log('load_requests_request_content activated')
+            $.ajax({
+                url:"{% url 'load_requests_request_content' %}",
+                type: 'POST',
+                data: { request_index: request_index,
+                        mode: "{{mode}}"},
+                dataType: 'json',
+                success: (data) => {
+                    let request_index = data.request_index;
+                    let request = data.req;
+                    console.log(request)
+                    request_div = document.getElementById(`request-${request_index}`);
+
+                    keyword_elem = document.getElementById(`request-keyword-${request_index}`);
+                    keyword_elem.innerHTML = `<a href="/analysis/request/${request.id}">${request.keyword}</a>`;
+
+                    periods_elem = document.getElementById(`request-periods-${request_index}`);
+                    periods_elem.innerHTML = request.periods;
+
+                    google_results_pages_elem = document.getElementById(`request-google-results-pages-${request_index}`);
+                    google_results_pages_elem.innerHTML = request.google_results_pages;
+
+                    periodicity_elem = document.getElementById(`request-periodicity-${request_index}`);
+                    periodicity_elem.innerHTML = request.periodicity;
+                    
+                    status_elem = document.getElementById(`request-status-${request_index}`);
+                    status_elem.innerHTML = request.status;
+
+                    privacy_elem = document.getElementById(`request-privacy-${request_index}`);
+                    privacy_elem.innerHTML = request.accessibility
+
+                    delete_btn = document.getElementById(`request-delete-btn-${request_index}`)
+                    delete_btn.href = `/analysis/request/delete/${request.id}`
+                    
+                    try{
+                        request_div.removeAttribute("hidden");
+                        }
+                    catch{}
+                    }
+                })
+            }
+
+  
+
 
         $(document).ready(
             $(window).on("load", (e)=>{
