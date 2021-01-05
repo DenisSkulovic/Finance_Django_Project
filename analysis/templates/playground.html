@@ -1,14 +1,20 @@
 {% extends 'base.html' %}
 
 {% block content %}
-    <textarea id="NN_textarea" placeholder="Enter your text here..."></textarea>
-    <div id="NN_result_div">
-        Results will appear here.
+    <div class="row">
+        <div class="col-md-6">
+            <textarea class="form-control" rows=15 id="NN_textarea" placeholder="Enter your text here..."></textarea>
+        </div>
+        <div class="col-md-6">
+            <div class="form-control h-100"  placeholder="Results will appear here." id="NN_result_div">
+            </div>
+        </div>
     </div>
 {% endblock content %}
 
 
 {% block javascript %}
+    {{ block.super }}
     <script>
 
 
@@ -25,7 +31,7 @@
 
                 setInterval(() => {
                     $.ajax({
-                        url:"{% url 'playground' %}",
+                        url:"{% url 'ajax_playground' %}",
                         type: 'POST',
                         data: { text: $("#NN_textarea").val() },
                         dataType: 'json',
@@ -34,13 +40,14 @@
                             document.getElementById('NN_result_div').innerHTML = data['html'];
                             }
                         })
-                    }, 2000)
+                    }, 1000)
             }
         })
     })
 
-    $(window).on('unload', (e) => {
+    $(window).on('beforeunload', (e) => {
         e.preventDefault()
+        console.log('exiting')
         $.ajax({
             url:"{% url 'change_model_status_js' %}",
             type: 'POST',

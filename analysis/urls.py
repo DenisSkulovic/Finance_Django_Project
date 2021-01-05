@@ -10,7 +10,9 @@ urlpatterns = [
     path('article/<int:pk>', views.article_detail_view, name='article_detail'),
     path('requests/', views.RequestsView.as_view(), name='requests'),
 
-    path('ajax/playground', views.playground, name='playground'),
+    path('ajax/refresh_processor_status', views.refresh_processor_status, name='refresh_processor_status'),
+
+    path('ajax/playground', views.playground, name='ajax_playground'),
 
     path('ajax/refresh_requests_status', views.refresh_requests_status, name='refresh_requests_status'),
     path('ajax/refresh_request_status', views.refresh_request_status, name='refresh_request_status'),
@@ -27,4 +29,5 @@ urlpatterns = [
     path('ajax/load_article_text_content', views.load_article_text_content, name='load_article_text_content'),
 
     path('ajax/article_detail_html', views.article_detail_html, name='article_detail_html'),
+
 ]

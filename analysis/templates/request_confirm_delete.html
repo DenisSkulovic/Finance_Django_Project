@@ -2,13 +2,14 @@
 
 {% block content %}
 <form method="POST">
+<h2 class='text-center mb-4'>CONFIRM DELETION</h2>
+
     {% csrf_token %} 
-    <div class='container'>
         <div class='row'>
 
-            <div class="col-sm-6 col-md-4">
+            <div class="col-sm-6 col-md-3  mt-3 ">
 
-                <div class="card border-light  bg-light shadow ml-2 mr-2 mb-5" id="request-{{i}}">
+                <div class="card border-light  bg-light shadow  ml-2 mr-2 mb-5" id="request-{{i}}">
                     <div class="card-header" id="request-keyword-{{i}}">
                         <h5>Airline Stocks</h5>
                     </div>
@@ -25,20 +26,23 @@
                             <p>Results Pages:</p>
                             <p>{{object.google_results_pages}}</p>
                         </div>
+                        <div class="card-text d-flex justify-content-between">
+                            <p>Status:</p>
+                            <p>{{object.status}}</p>
+                        </div>
                     </div>
                     <div class="card-footer">
-                        <input class="btn btn-danger" type="submit" value="Confirm"> 
+                        <input class="btn btn-danger btn-block" type="submit" value="Confirm"> 
                     </div>
                 </div>
 
             </div>
 
-            <div class="col-sm-6 col-md-8"
+            <div class="col-sm-6 col-md-9  mt-3">
 
                     <p class="ml-4 mt-4">Are you sure you want to delete the request?</p> 
             </div>
                     
         </div>
-    </div>
 </form> 
 {% endblock content %}

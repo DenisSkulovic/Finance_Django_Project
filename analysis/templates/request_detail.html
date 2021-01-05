@@ -3,44 +3,39 @@
 
 
 {% block content %}
-    <div class="container">
+    <h2 class='text-center mb-4'>REQUEST INFO</h2>
         <div class="row">
             <div class="col-xs-12 col-sm-6 col-md-3">
-                <div class="row">
-                    <div>
-                        <div class="card border-light  bg-light shadow ml-2 mr-2 mb-5">
-                            <div class="card-header">
-                                <h5>{{req.keyword}}</h5>
+
+                    <div class="card border-light  bg-light shadow ml-2 mr-2 mt-3 mb-5">
+                        <div class="card-header">
+                            <h5>{{req.keyword}}</h5>
+                        </div>
+                        <div class="card-body d-flex-row">
+                            <div class="card-text d-flex justify-content-between">
+                                <p>Periods:</p>
+                                <p>{{req.periods}}</p>
                             </div>
-                            <div class="card-body d-flex-row">
-                                <div class="card-text d-flex justify-content-between">
-                                    <p>Periods:</p>
-                                    <p>{{req.periods}}</p>
-                                </div>
-                                <div class="card-text d-flex justify-content-between">
-                                    <p>Periodicity:</p>
-                                    <p>{{req.periodicity}}</p>
-                                </div>
-                                <div class="card-text d-flex justify-content-between">
-                                    <p>Results Pages:</p>
-                                    <p>{{req.google_results_pages}}</p>
-                                </div>
-                                <div class="card-text d-flex justify-content-between">
-                                    <p>Status:</p>
-                                    <p>{{req.status}}</p>
-                                </div>
+                            <div class="card-text d-flex justify-content-between">
+                                <p>Periodicity:</p>
+                                <p>{{req.periodicity}}</p>
                             </div>
-                            <div class="card-footer">
-                                <a href="{% url 'request_delete' pk=req.id %}" class="btn btn-danger btn-block">Delete</a>
+                            <div class="card-text d-flex justify-content-between">
+                                <p>Results Pages:</p>
+                                <p>{{req.google_results_pages}}</p>
+                            </div>
+                            <div class="card-text d-flex justify-content-between">
+                                <p>Status:</p>
+                                <p>{{req.status}}</p>
                             </div>
                         </div>
+                        <div class="card-footer">
+                            <a href="{% url 'request_delete' pk=req.id %}" class="btn btn-danger btn-block">
+                                Delete
+                            </a>
+                        </div>
                     </div>
-                </div>
 
-                <div>
-                    <div>Scraper: <span id="scraper_status"></span></div>
-                    <div>Model: <span id="model_status"></span></div>
-                </div>
             </div>
             <div class="col-xs-12 col-sm-6 col-md-9">
                 <div id='request-articles-div' class='container-fluid'>
@@ -50,9 +45,15 @@
                             <div class="container mt-3 request-article-div" id='request-article-div-{{i}}' hidden>
                                 <ul class="list-group">
                                     <li class="list-group-item shadow">
-                                        <span class="float-left"><span id="request-article-date-{{i}}"></span> | <span id="request-article-link-{{i}}"></span></span>
-                                        <p id="request-article-title-{{i}}"></p>
-                                        <span>Status:</span> <span id="request-article-status-{{i}}"></span>
+                                        <div class="row">
+                                            <div class="col-md-3">
+                                                <p class="float-left"><span id="request-article-date-{{i}}"></span> | <span id="request-article-link-{{i}}"></span></p>
+                                                <p id="request-article-status-{{i}}"></p>
+                                            </div>
+                                            <div class="col-md-9">
+                                                <h6 id="request-article-title-{{i}}"></h6>
+                                            </div>
+                                        </div>
                                     </li>
                                 </ul>
                             </div>
@@ -63,13 +64,12 @@
                 </div>
             </div>
         </div>  
-    </div>
-
 
 {% endblock content %}
 
 
 {% block javascript %}
+    {{ block.super }}   
     <script>
 
     function refresh_request_status(){
@@ -80,12 +80,7 @@
             data: { request_pk: "{{req.pk}}"},
             dataType: 'json',
             success: (data) => {
-                let scraper_status = data['scraper_status'];
-                let model_status = data['model_status'];
                 let statuses = data['statuses']
-
-                document.getElementById('scraper_status').innerHTML = scraper_status
-                document.getElementById('model_status').innerHTML = model_status
 
                 let request_article_status;
                 for (i=0;i<statuses.length; i++){

@@ -1,52 +1,55 @@
 {% extends 'base.html' %}
 
 {% block content %}
+    <h2 class='text-center mb-4'>REQUESTS</h2>
+    <div class="row" id="requests-div">
 
-    <div>Scraper: <span id="scraper_status"></span></div>
-    <div>Model: <span id="model_status"></span></div>
+        <div class="col-xs-12 col-sm-4 col-md-3 col-lg-2  mt-2">
+            <div class="btn-group-vertical btn-block  ml-3">
+                <a class="btn btn-success" href="{% url 'request_create' %}">New Request</a>
+                <a class="btn btn-primary" href="{% url 'request_create' %}">New Request</a>
+            </div>
+        </div>
 
-    <div class="container mt-3" id="requests-div">
-        <div class="row d-flex flex-wrap">
+        <div class="col-xs-12 col-sm-8 col-md-9  col-lg-10 d-flex flex-wrap container-fluid">
+        {% for i in range %}
 
-
-                {% for i in range %}
-
-                    <div class="card w-25 border-light  bg-light shadow ml-3 mr-3 mb-5" id="request-{{i}}" hidden>
-                        <div class="card-header" id="request-keyword-{{i}}">
-                            <h5>Airline Stocks</h5>
-                        </div>
-                        <div class="card-body d-flex-row">
-                            <div class="card-text d-flex justify-content-between">
-                                <p>Periods:</p>
-                                <p id="request-periods-{{i}}"></p>
-                            </div>
-                            <div class="card-text d-flex justify-content-between">
-                                <p>Periodicity:</p>
-                                <p id="request-periodicity-{{i}}"></p>
-                            </div>
-                            <div class="card-text d-flex justify-content-between">
-                                <p>Results Pages:</p>
-                                <p id="request-google-results-pages-{{i}}"></p>
-                            </div>
-                            <div class="card-text d-flex justify-content-between">
-                                <p>Status:</p>
-                                <p id="request-status-{{i}}">{{req.status}}</p>
-                            </div>
-                        </div>
-                        <div class="card-footer">
-                            <a href="#" class="btn btn-secondary btn-block">Delete</a>
-                        </div>
+            <div style="width:230px;" class="card  border-light  bg-light shadow  mt-2 ml-3 mr-3 mb-4" id="request-{{i}}" hidden>
+                <div class="card-header" id="request-keyword-{{i}}">
+                    <h5>Airline Stocks</h5>
+                </div>
+                <div class="card-body d-flex-row">
+                    <div class="card-text d-flex justify-content-between">
+                        <p>Periods:</p>
+                        <p id="request-periods-{{i}}"></p>
                     </div>
+                    <div class="card-text d-flex justify-content-between">
+                        <p>Periodicity:</p>
+                        <p id="request-periodicity-{{i}}"></p>
+                    </div>
+                    <div class="card-text d-flex justify-content-between">
+                        <p>Results Pages:</p>
+                        <p id="request-google-results-pages-{{i}}"></p>
+                    </div>
+                    <div class="card-text d-flex justify-content-between">
+                        <p>Status:</p>
+                        <p id="request-status-{{i}}">{{req.status}}</p>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <a id='request-delete-btn-{{i}}' href="#" class="btn btn-danger btn-block">Delete</a>
+                </div>
+            </div>
 
-                 {% endfor %}
-
-
+            {% endfor %}
         </div>
     </div>
+
 {% endblock content %}
 
 
 {% block javascript %}
+    {{ block.super }}
     <script>
         function requests_load_initial_content() {
         console.log('requests_load_initial_content activated')
@@ -73,10 +76,6 @@
             data: { user: "{{user}}"},
             dataType: 'json',
             success: (data) => {
-                let scraper_status = data['scraper_status'];
-                let model_status = data['model_status'];
-                document.getElementById('scraper_status').innerHTML = scraper_status;
-                document.getElementById('model_status').innerHTML = model_status;
 
                 let statuses = data['statuses'];
 

@@ -135,6 +135,20 @@ def get_playground_html(data):
 # Javascript related functions
 
 @csrf_exempt
+def refresh_processor_status(request):
+    if request.method == "POST":
+        try: scraper_status = ProcessingStatus.objects.get(name='SCRAPER').status
+        except: scraper_status = 'FREE'
+        try: model_status = ProcessingStatus.objects.get(name='MODEL').status
+        except: model_status = 'FREE'  
+        data = {'scraper_status':scraper_status, 
+                'model_status':model_status,
+                }
+        return JsonResponse(data, status=201, safe=False)      
+
+
+
+@csrf_exempt
 def article_detail_html(request):
     if request.method == 'POST':
         tag = request.POST['tag']
@@ -163,51 +177,33 @@ def playground(request):
 @csrf_exempt
 def refresh_requests_status(request):
     if request.method == 'POST':
-        try: scraper_status = ProcessingStatus.objects.get(name='SCRAPER').status
-        except: scraper_status = 'FREE'
-        try: model_status = ProcessingStatus.objects.get(name='MODEL').status
-        except: model_status = 'FREE'
 
         user = request.user
         requests = Request.objects.filter(user=user)
         statuses = [req.status for req in requests]
-        data = {'statuses':statuses, 
-                'scraper_status':scraper_status, 
-                'model_status':model_status}
+        data = {'statuses':statuses}
         return JsonResponse(data, status=201, safe=False)
 
 @csrf_exempt
 def refresh_request_status(request):
     if request.method == 'POST':
-        try: scraper_status = ProcessingStatus.objects.get(name='SCRAPER').status
-        except: scraper_status = 'FREE'
-        try: model_status = ProcessingStatus.objects.get(name='MODEL').status
-        except: model_status = 'FREE'
 
         request_pk = request.POST.get('request_pk')
         req = Request.objects.get(pk=request_pk)
         articles = req.article_set.all()
         statuses = [article.status for article in articles]
-        data = {'statuses':statuses, 
-                'scraper_status':scraper_status, 
-                'model_status':model_status}
+        data = {'statuses':statuses}
         return JsonResponse(data, status=201, safe=False)
 
 @csrf_exempt
 def refresh_article_status(request):
     if request.method == 'POST':
-        try: scraper_status = ProcessingStatus.objects.get(name='SCRAPER').status
-        except: scraper_status = 'FREE'
-        try: model_status = ProcessingStatus.objects.get(name='MODEL').status
-        except: model_status = 'FREE'
 
         article_pk = request.POST['article_pk']
         article = Article.objects.get(pk=article_pk)
         texts = article.text_set.all()
         statuses = [text.status for text in texts]
-        data = {'statuses':statuses, 
-                'scraper_status':scraper_status, 
-                'model_status':model_status}
+        data = {'statuses':statuses,}
         return JsonResponse(data, status=201, safe=False)
 
 
@@ -271,6 +267,7 @@ def load_article_text_content(request):
 def change_model_status_js(request):
     if request.method == 'POST':
         status = request.POST['status']
+        print(status)
         model_status = ProcessingStatus.objects.get(name='MODEL')
         model_status.status = status
         model_status.save()

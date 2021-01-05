@@ -3,27 +3,40 @@
 
 
 {% block content %}
+<h2 class='text-center mb-4'>ARTICLE</h2>
 
-    
-    <h1>{{article.title}}</h1>
-    <p>{{article.date}}</p>
-    <p>{{article.link}}</p>
-    <p>{{article.status}}</p>
-    <div>Scraper: <span id="scraper_status"></span></div>
-    <div>Model: <span id="model_status"></span></div>
-
-    <div id='articles_text_container'>
-            {% for i in range %}
-                <div class='article_text_div' id='article_text_div_{{i}}' hidden>
-                    <div id='article_text_{{i}}' hidden></div>
-                    <span id='article_text_status_{{i}}' hidden>Empty</span>
+<div class="container mt-3 mb-3 request-article-div">
+    <ul class="list-group">
+        <li class="list-group-item shadow">
+            <div class="row">
+                <div class="col-xs-12 col-sm-4 col-md-3 col-lg-2">
+                    <div class="row ml-2"><span class="mr-2">{{article.date}}</span> | <span class="ml-2"><a href="{{article.link}}"> link</a></span></div>
+                    <div class="row ml-2">{{article.status}}</div>
                 </div>
-            {% endfor %}
-    </div>
+                <div class="col-xs-12 col-sm-8 col-md-9 col-lg-10">
+                    <h4 class="ml-2">{{article.title}}</h4>
+                </div>
+            </div>
+        </li>
+    </ul>
+</div>
+
+<div class="container mt-5" id='articles-text-container'>
+    {% for i in range %}
+        <div class='article_text_div' id='article_text_div_{{i}}' hidden>
+            <div id='article_text_{{i}}' hidden></div>
+            <span id='article_text_status_{{i}}' hidden>Empty</span>
+        </div>
+    {% endfor %}
+</div>
+
 {% endblock content %}
 
 
+
+
 {% block javascript %}
+    {{ block.super }}
     <script>
     function refresh_article_status(){
         console.log('refresh_article_status activated')
@@ -33,12 +46,7 @@
             data: { article_pk: "{{article.pk}}"},
             dataType: 'json',
             success: (data) => {
-                let scraper_status = data['scraper_status'];
-                let model_status = data['model_status'];
-                let statuses = data['statuses']
-
-                document.getElementById('scraper_status').innerHTML = scraper_status
-                document.getElementById('model_status').innerHTML = model_status
+                let statuses = data['statuses'];
 
                 let article_text;
                 let article_text_status;
