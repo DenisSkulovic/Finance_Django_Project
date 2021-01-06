@@ -18,6 +18,8 @@ import pickle
 
 from decouple import config
 
+os.environ["KERAS_BACKEND"] = "theano"
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -197,6 +199,8 @@ DATABASES['default'].update(db_from_env)
 with open('analysis/tokenizer.pickle', 'rb') as f:
     TOKENIZER = pickle.load(f)
 TEXT_CLEANER = dcl.ArticleTextCleaner(tokenizer = TOKENIZER)
+from tensorflow.keras.backend import clear_session
+clear_session()
 MODEL = load_model('analysis/best_NN_model.hdf5')
 
 

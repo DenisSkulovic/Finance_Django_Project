@@ -2,7 +2,6 @@ from django.forms.models import model_to_dict
 from django.shortcuts import render
 from django.views.generic import TemplateView, DetailView, View
 from portfolio.models import Ticker
-from yfinance_functions import store_ticker_info
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
