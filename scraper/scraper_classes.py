@@ -377,7 +377,7 @@ class GoogleScraper(BaseScraper):
             print('scraper is busy')
 
     
-    def scrape_articles(self, work_time_sec=120):
+    def scrape_articles(self, work_time_sec=60):
         if Article.objects.filter(status='Unprocessed').first() == None:
             print('article scraper exited')
             return

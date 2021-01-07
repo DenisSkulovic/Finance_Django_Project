@@ -69,7 +69,7 @@ def change_accessibility(request):
 class RequestDeleteView(UserPassesTestMixin, LoginRequiredMixin, DeleteView):
     template_name = 'request_confirm_delete.html'
     model = Request
-    success_url = reverse_lazy('requests')
+    success_url = f'/analysis/requests/PUBLIC'
     def test_func(self):
         obj = self.get_object()
         return obj.user == self.request.user

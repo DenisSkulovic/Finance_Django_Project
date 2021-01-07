@@ -61,7 +61,3 @@ class Text(models.Model):
     sentiment = models.TextField(null=True, blank=True)
     status = models.CharField(max_length=55, default='Unprocessed', choices=status_choices)
 
-
-
-# from django.db.models import Count
-# Request.objects.annotate(count_articles=Count('article'))
