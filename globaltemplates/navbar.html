@@ -44,6 +44,10 @@
             
                 {% if user.is_authenticated %}
                 <li class="nav-item active">
+                    <span class="nav-link mr-4" %}>Logged in with {{user.email}}</span>
+                </li>
+
+                <li class="nav-item active">
                     <a class="nav-link" href="{% url 'account_logout' %}">Log Out</a>
                 </li>
                 {% else %}

@@ -5,7 +5,34 @@
 
 {% block content %}
 
-<h1>Homepage</h1>
+<h1 class="text-center p-2">Welcome to iziMoney</h1>
+<h6 class="text-center p-4 ">Scrape. Analyze. Profit.</h6>
+<div class="p-4 row">
+    <div class="col-md-4">  
+        <h6>Usage:</h6> 
+        <ul>
+            <li class="mb-2">Check out the iziMoney Playground to interact with the model and get instant analysis of text that you type or paste.</li>
+            <li class="mb-2">Head over to the Requests tab and check out requests published by other users.</li>
+            <li class="mb-2">Create an account to submit your own requests, and watch the scraper scrape and the model predict.</li>
+        </ul>
+    </div> 
+    <div class="col-md-8 p-4">
+        <div class="pl-2 pr-2">
+            <h5 class="mb-3"><b>iziMoney</b> can help you scrape news articles from Google on any search keyword you choose and analyze the contents for financial sentiment.</h5>
+            <h5 class="mb-3">The app uses Selenium to collect data and a Neural Network written with Keras, designed to excess with text and financial sentences.</h5>
+        </div>
+        <div class="row p-3">
+            <div class="col-md-4">
+                <p><b>PERIODS</b> - number of periods the scraper will collect. A period is set by the scraper in the Tools tab of Google search.</p>
+            </div>
+            <div class="col-md-4">
+                <p><b>PERIODICITY</b> - the date range of a period. 5 day periodicity would collect articles published within 5 days after the period start.</p>
+            </div>
+            <div class="col-md-4">
+                <p><b>RESULTS PAGES</b> - determines the number of search pages the scraper will collect per period.</p>
+            </div>
+        </div>
 
-
+    </div>
+</div>
 {% endblock content %}

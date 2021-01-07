@@ -1,4 +1,3 @@
-from tensorflow.keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
 from re import sub
 import string
